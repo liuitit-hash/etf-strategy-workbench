@@ -230,31 +230,64 @@ def _twr_best_effort(trades, inst_by_id, macro) -> float | None:
 # ---------------- 4. 距档位 / 距止盈 ----------------
 
 def tier_gaps(cfg: dict) -> list[dict]:
+    """逐标的的回撤/收益率，以及按真实持仓均价判定的加仓档位、止盈批次触发情况。"""
     quotes = db.latest_quotes()
+    inst_by_id = {i["id"]: i for i in cfg["instruments"]}
+    positions = finance.build_positions(db.load_trades(), inst_by_id)
     out = []
     for inst in cfg["instruments"]:
         iid = inst["id"]
         q = quotes.get(iid, {})
         cur = q.get("close")
+        cur = float(cur) if cur is not None else None
+        p = positions.get(iid)
+        held = bool(p and p.shares > 1e-9)
+        avg = p.avg_cost if p else None
         rule = cfg["graham_rules"].get(iid)
         tiers = cfg["tiers"].get(iid, [])
         tp = cfg["take_profit"].get(iid)
-        info = {"code": inst["code"], "name": inst["name"], "current": cur,
+        info = {"code": inst["code"], "name": inst["name"],
+                "group": "持仓" if held else "跟踪",
+                "current": cur, "avg_cost": round(avg, 4) if avg else None,
                 "blacklist": inst.get("blacklist", False)}
-        if cur and rule:
-            # 锚点用近高（无持仓上下文时的参考）
-            highs = [float(r["close"]) for r in db.quote_history(iid) if r.get("close")]
-            anchor = discipline.resolve_anchor(rule, {"avg_cost": cur}, highs) or cur
-            dd = round((anchor - float(cur)) / anchor * 100, 2) if anchor else None
-            info["anchor"] = anchor
+
+        if held and avg and cur:
+            info["return_pct"] = round((cur - avg) / avg * 100, 2)   # 当前收益率(对成本)
+
+        # 加仓档位（持仓、非黑名单；回撤锚定均价/近高/手动）
+        if cur and rule and held and avg and not inst.get("blacklist"):
+            mode = rule.get("anchor_mode", "cost")
+            if mode == "recent_high":
+                highs = [float(r["close"]) for r in db.quote_history(iid) if r.get("close")]
+                anchor = max(highs) if highs else avg
+            elif mode == "manual":
+                anchor = rule.get("anchor_price") or avg
+            else:
+                anchor = avg
+            dd = round((anchor - cur) / anchor * 100, 2) if anchor else None
+            info["anchor"] = round(anchor, 4) if anchor else None
             info["drawdown_pct"] = dd
+            reached = [t for t in tiers if dd is not None and dd >= float(t["drawdown_pct"])]
+            if reached:
+                top = reached[-1]
+                info["add_triggered"] = {"tier": top["tier_index"],
+                                         "drawdown_pct": float(top["drawdown_pct"]),
+                                         "allow_add": float(top["add_amount"])}
             nxt = next((t for t in tiers if dd is not None and dd < float(t["drawdown_pct"])), None)
             if nxt:
                 info["next_tier"] = {"tier": nxt["tier_index"], "need_drawdown_pct": nxt["drawdown_pct"],
                                      "add_amount": nxt["add_amount"],
                                      "gap_pct": round(float(nxt["drawdown_pct"]) - dd, 2) if dd is not None else None}
-        if cur and tp and tp.get("target_price"):
-            info["to_take_profit_price"] = round(float(tp["target_price"]) - float(cur), 4)
+
+        # 止盈触发（持仓）
+        if held and avg and cur and tp:
+            ret = (cur - avg) / avg * 100
+            hits = [b for b in (tp.get("batches") or []) if ret >= float(b.get("trigger_return", 1e9))]
+            if tp.get("target_return_pct") and ret >= float(tp["target_return_pct"]):
+                info["tp_target_reached"] = True
+            if hits:
+                info["tp_triggered"] = [{"trigger_return": b["trigger_return"], "sell_ratio": b["sell_ratio"]}
+                                        for b in hits]
         out.append(info)
     return out
 
