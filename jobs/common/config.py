@@ -9,6 +9,12 @@ except Exception:
     pass
 
 
+def _opt(key: str, default: str) -> str:
+    """读取环境变量；空字符串（GitHub 未设的 vars 会传 ""）也视为未设，回退默认。"""
+    v = os.getenv(key)
+    return v if v not in (None, "") else default
+
+
 def _req(key: str) -> str:
     v = os.getenv(key)
     if not v:
@@ -20,9 +26,9 @@ SUPABASE_URL = _req("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = _req("SUPABASE_SERVICE_ROLE_KEY")
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
-LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.deepseek.com")
-LLM_MODEL = os.getenv("LLM_MODEL", "deepseek-chat")
-LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))
+LLM_BASE_URL = _opt("LLM_BASE_URL", "https://api.deepseek.com")
+LLM_MODEL = _opt("LLM_MODEL", "deepseek-chat")
+LLM_TEMPERATURE = float(_opt("LLM_TEMPERATURE", "0.3"))
 
-MARKET = os.getenv("MARKET", "a-share")
-TZ = os.getenv("TZ", "Asia/Shanghai")
+MARKET = _opt("MARKET", "a-share")
+TZ = _opt("TZ", "Asia/Shanghai")
