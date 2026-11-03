@@ -1,0 +1,14 @@
+{
+  "name": "ETF 策略校准工作台",
+  "short_name": "ETF工作台",
+  "description": "单人自用：交易纪律校验 + 浮盈/落袋隔离 + 三框架复盘简报",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

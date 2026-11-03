@@ -1,0 +1,25 @@
+name: keepalive
+
+# 防止"连续60天无活动→定时任务被自动停用"。每周一次写入一个时间戳并提交，
+# 重置仓库活动计时。若你本来就经常手动 dispatch 简报，可删除此文件。
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"   # 每周一 UTC 03:17
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          date -u > .github/last-keepalive.txt
+          git config user.name "keepalive-bot"
+          git config user.email "noreply@github.com"
+          git add .github/last-keepalive.txt
+          git commit -m "chore: keepalive" || echo "nothing to commit"
+          git push || echo "push skipped"

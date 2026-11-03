@@ -1,0 +1,17 @@
+# deps / build
+node_modules/
+web/dist/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# secrets（绝不提交）
+.env
+.env.local
+web/.env.local
+jobs/.env
+
+# misc
+.DS_Store
+*.log
