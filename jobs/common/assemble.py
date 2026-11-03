@@ -269,11 +269,18 @@ def build_user_message(btype: str, cfg: dict, d: date,
             for n in db.recent_news(d)]
     quotes = db.latest_quotes()
 
+    inst_by_id = {i["id"]: i for i in cfg["instruments"]}
+    positions = finance.build_positions(db.load_trades(), inst_by_id)
     inst_view = []
     for i in cfg["instruments"]:
         q = quotes.get(i["id"], {})
+        p = positions.get(i["id"])
+        held = bool(p and p.shares > 1e-9)
         inst_view.append({
             "code": i["code"], "name": i["name"], "currency": i["currency"], "channel": i["channel"],
+            "group": "持仓" if held else "跟踪",            # 持仓 vs 跟踪清单
+            "shares": round(p.shares, 2) if p else 0,
+            "avg_cost": round(p.avg_cost, 4) if p else None,
             "in_circle": i["in_circle"], "blacklist": i["blacklist"],
             "frameworks": i["frameworks"], "benchmark_index": i.get("benchmark_index"),
             "close": q.get("close"), "pe": q.get("pe"), "pb": q.get("pb"),
@@ -310,6 +317,7 @@ def build_user_message(btype: str, cfg: dict, d: date,
         "pre": "请据此生成【盘前简报】。缺失字段如实标注数据缺失。",
         "intra": "请据此生成【盘中快照简报】，一次性，不预测。",
         "post": "请据此生成【盘后完整复盘（六维）】。严格区分已兑现与账面浮动盈亏。",
+        "daily": "请据此生成【每日研判条】：置顶、简短；宏观定性+估值温度+高久期风险+按我的规则今日触发。只复述规则、不新增建议、不预测、不搬外部荐股。",
     }[btype]
 
     return (

@@ -1,5 +1,5 @@
-"""盘前简报入口。用法：python -m jobs.premarket  （手动跳过交易日判断：加 force）"""
-from jobs.common.runner import run_briefing
+"""盘前入口：同时生成 盘前简报 + 每日研判条。用法：python -m jobs.premarket（手动：加 force）"""
+from jobs.common.runner import run_briefings
 
 if __name__ == "__main__":
-    run_briefing("pre")
+    run_briefings(["pre", "daily"])

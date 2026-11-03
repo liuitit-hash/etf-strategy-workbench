@@ -31,7 +31,7 @@ async function copy() {
   <p class="muted" style="font-size:12px">简报由定时任务后台预生成入库，页面只读。需要临时复盘可在 GitHub Actions 手动 dispatch。</p>
 
   <div class="pill-group">
-    <button v-for="t in ['pre','intra','post']" :key="t" :class="{ on: type === t }" @click="type = t">{{ BRIEFING_LABEL[t] }}</button>
+    <button v-for="t in ['daily','pre','intra','post']" :key="t" :class="{ on: type === t }" @click="type = t">{{ BRIEFING_LABEL[t] }}</button>
   </div>
 
   <div v-if="current" class="card">

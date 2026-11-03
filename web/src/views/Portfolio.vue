@@ -1,8 +1,12 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { marked } from 'marked'
 import { store, instById } from '../store'
 import { buildPositions, positionView, xirr } from '../lib/finance'
 import { fmtMoney, fmtPct, fmtNum, pnlClass } from '../lib/format'
+
+const dailyOpen = ref(true)
+const dailyHtml = computed(() => (store.daily ? marked.parse(store.daily.markdown) : ''))
 
 const map = computed(() => instById())
 const fxNow = (inst) => (inst?.currency === 'HKD' ? Number(store.macro.hkdcnh?.value || 0) || 1 : 1)
@@ -43,6 +47,15 @@ const allocSum = computed(() => Object.values(store.allocations).reduce((s, v) =
 </script>
 
 <template>
+  <!-- 每日研判条（置顶） -->
+  <div v-if="store.daily" class="card" style="border-color:var(--accent)">
+    <div class="spread" @click="dailyOpen = !dailyOpen" style="cursor:pointer">
+      <b class="accent">📣 每日研判 · {{ store.daily.date }}</b>
+      <span class="muted" style="font-size:12px">{{ dailyOpen ? '收起' : '展开' }}</span>
+    </div>
+    <div v-show="dailyOpen" class="md" v-html="dailyHtml" style="margin-top:8px"></div>
+  </div>
+
   <h2>持仓台账 & 绩效看板</h2>
 
   <!-- 两类盈亏强制隔离 -->

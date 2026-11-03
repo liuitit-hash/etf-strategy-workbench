@@ -15,6 +15,7 @@ export const store = reactive({
   benchmarks: [],
   news: [],
   execRate: {},
+  daily: null,       // 最新每日研判
   loading: false,
   error: '',
 })
@@ -60,12 +61,18 @@ export async function loadNews() {
   store.news = (await sel('news_items', { col: 'date', asc: false })).slice(0, 40)
 }
 
+export async function loadDaily() {
+  const { data } = await supabase.from('briefings').select('*')
+    .eq('type', 'daily').order('date', { ascending: false }).order('created_at', { ascending: false }).limit(1)
+  store.daily = (data && data[0]) || null
+}
+
 export async function loadAll() {
   store.loading = true
   store.error = ''
   try {
     await loadConfig()
-    await Promise.all([loadTrades(), loadMarket(), loadNews()])
+    await Promise.all([loadTrades(), loadMarket(), loadNews(), loadDaily()])
   } catch (e) {
     store.error = e.message || String(e)
   } finally {

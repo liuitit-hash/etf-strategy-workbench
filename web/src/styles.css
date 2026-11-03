@@ -68,6 +68,7 @@ button:disabled { opacity: .5; }
 .up { color: var(--up); }
 .down { color: var(--down); }
 .muted { color: var(--muted); }
+.accent { color: var(--accent); }
 .big { font-size: 26px; font-weight: 750; }
 .mono { font-variant-numeric: tabular-nums; }
 
