@@ -24,7 +24,7 @@ export function evaluateTrade(trade, ctx) {
   if (tag === 'emotional') add('self_tagged_emotional', 'block', '本人已标记为情绪化提前操作')
 
   if (side === 'buy') {
-    if (inst.blacklist) add('blacklist_add', 'block', `${inst.name} 为黑名单标的，永久禁止加仓，仅可止盈减仓`)
+    if (inst.blacklist && held > 1e-9) add('blacklist_add', 'block', `${inst.name} 为黑名单标的，永久禁止加仓，仅可止盈减仓`)
     if ((inst.frameworks || []).includes('munger') && !inst.in_circle)
       add('out_of_circle', 'warn', '标的不在能力圈内，芒格框架提示谨慎')
 

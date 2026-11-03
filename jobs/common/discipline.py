@@ -43,8 +43,8 @@ def evaluate_trade(trade: dict, ctx: dict) -> dict:
         add("self_tagged_emotional", "block", "本人已标记为情绪化提前操作")
 
     if side == "buy":
-        # 1) 黑名单永久禁止加仓
-        if inst.get("blacklist"):
+        # 1) 黑名单永久禁止加仓（仅拦"加仓"，不拦已有建仓/首次导入）
+        if inst.get("blacklist") and held > 1e-9:
             add("blacklist_add", "block", f"{inst['name']} 为黑名单标的，永久禁止加仓，仅可止盈减仓")
 
         # 2) 能力圈（芒格框架）
